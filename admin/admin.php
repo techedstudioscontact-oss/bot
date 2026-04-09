@@ -38,7 +38,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         }
         .card h3 { margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
         #qr-container { text-align: center; }
-        #qr-container img { max-width: 200px; border-radius: 8px; margin-top: 20px; }
+                #qr-container img { 
+            max-width: 280px; 
+            border-radius: 8px; 
+            margin-top: 20px; 
+            background: #fff; 
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
         .status-badge {
             display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 14px; font-weight: bold;
         }
@@ -57,30 +64,42 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 <body>
     <div class="header">
         <h1>Aiko AI Control Panel</h1>
-        <div>
-            <form method="POST" style="margin:0;"><a href="logout.php" style="color:#f87171; text-decoration:none;">Logout</a></form>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button id="reset-btn" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid #ef4444; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Reset Connection</button>
+            <a href="logout.php" style="color: #a1a1aa; text-decoration: none; font-size: 14px;">Logout</a>
         </div>
     </div>
 
     <div class="dashboard-grid">
         <div class="card">
-            <h3>Bot Status</h3>
-            <div style="text-align: center;">
+            <h3>Bot Connection</h3>
+            <div style="text-align: center; margin-bottom: 20px;">
                 <span id="bot-status" class="status-badge status-disconnected">Checking...</span>
             </div>
             
             <div id="qr-container">
-                <p style="font-size: 13px; color: #a1a1aa; margin-top: 20px;">If disconnected, scan the QR code below using WhatsApp Linked Devices.</p>
-                <img id="qr-image" src="" alt="Waiting for QR..." style="display: none;">
-                <div id="qr-loading">Waiting for bot to generate QR...</div>
+                <div id="qr-loading" style="padding: 40px 0; color: #a1a1aa;">
+                    <div style="margin-bottom: 15px;">⏳ Initializing Session...</div>
+                    <small>If this takes too long, please restart the bot.</small>
+                </div>
+                <img id="qr-image" src="" alt="WhatsApp QR Code" style="display: none;">
+                
+                <div id="scan-tips" style="display: none; margin-top: 25px; text-align: left; font-size: 13px; color: #a1a1aa; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;">
+                    <strong style="color: #38bdf8; display: block; margin-bottom: 5px;">How to Link:</strong>
+                    1. Open WhatsApp on your phone<br>
+                    2. Tap <strong>Menu</strong> or <strong>Settings</strong> and select <strong>Linked Devices</strong><br>
+                    3. Tap on <strong>Link a Device</strong><br>
+                    4. Point your phone to this screen to capture the code
+                </div>
             </div>
         </div>
 
         <div class="card">
-            <h3>Live Operations</h3>
+            <h3>Recent Logs & Messages</h3>
             <ul id="messages-list">
-                <!-- Messages populated by Firebase -->
-                <li style="color: #a1a1aa; border:none; text-align:center;">Waiting for new messages...</li>
+                <li style="color: #a1a1aa; border:none; text-align:center; padding-top: 50px;">
+                    Waiting for network activity...
+                </li>
             </ul>
         </div>
     </div>
@@ -124,10 +143,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         document.getElementById('qr-image').src = data.qrCode;
                         document.getElementById('qr-image').style.display = 'inline';
                         document.getElementById('qr-loading').style.display = 'none';
+                        document.getElementById('scan-tips').style.display = 'block';
                     } else {
                         document.getElementById('qr-image').style.display = 'none';
                         document.getElementById('qr-loading').style.display = 'block';
                         document.getElementById('qr-loading').textContent = 'Waiting for bot to generate QR...';
+                        document.getElementById('scan-tips').style.display = 'none';
                     }
                 }
             }

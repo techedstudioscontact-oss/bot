@@ -19,10 +19,11 @@ async function connectToWhatsApp() {
 
     const sock = makeWASocket({
         version,
-        printQRInTerminal: false, // Cleaner logs: use Admin Panel for QR
+        printQRInTerminal: false,
         auth: state,
         logger: pino({ level: 'silent' }),
-        browser: ["Ubuntu", "Chrome", "20.0.04"],
+        // Standard Browser ID to avoid "Could not link" errors
+        browser: ["Teched Studios", "Chrome", "121.0.6167.160"],
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 0,
         syncFullHistory: false,
@@ -42,7 +43,14 @@ async function connectToWhatsApp() {
         if (qr) {
             qrcode.generate(qr, { small: true });
             console.log("Scan the QR code above with your WhatsApp app.");
-            const qrcodeDataURL = await require('qrcode').toDataURL(qr);
+            const qrcodeDataURL = await require('qrcode').toDataURL(qr, {
+                margin: 2,
+                scale: 10,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            });
             await firebase.updateQR(qrcodeDataURL);
         }
 
