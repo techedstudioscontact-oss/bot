@@ -19,15 +19,17 @@ async function connectToWhatsApp() {
 
     const sock = makeWASocket({
         version,
-        printQRInTerminal: true, // Let it print in terminal for easier scanning
+        printQRInTerminal: false, // Cleaner logs: use Admin Panel for QR
         auth: state,
         logger: pino({ level: 'silent' }),
-        browser: ["Ubuntu", "Chrome", "20.0.04"], // More standard browser identity
-        connectTimeoutMs: 60000,   // Increase timeout for GitHub Actions
-        defaultQueryTimeoutMs: 0,  // Disable some internal Baileys timeouts
-        syncFullHistory: false,    // Reduce data load to avoid 408/405
+        browser: ["Ubuntu", "Chrome", "20.0.04"],
+        connectTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 0,
+        syncFullHistory: false,
         getMessage: async (key) => { return { conversation: 'Aiko is processing...' } }
     });
+
+    console.log("🔗 Monitoring Admin Panel for QR Code: https://techedstudios.infinityfreeapp.com/bot/admin.php");
 
     sock.ev.on('creds.update', async () => {
         await saveCreds();

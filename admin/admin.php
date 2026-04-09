@@ -88,7 +88,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     <!-- Firebase JS SDK setup -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
         // Actual Firebase Config from Console
         const firebaseConfig = {
@@ -103,14 +103,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db = getDatabase(app);
 
-        // Listen for QR and Bot Status updates
-        const statusDoc = doc(db, 'system', 'status');
-        onSnapshot(statusDoc, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                
+        // Listen for QR and Bot Status updates (Realtime Database version)
+        const statusRef = ref(db, 'status');
+        onValue(statusRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
                 const statusBadge = document.getElementById('bot-status');
                 if (data.status === 'CONNECTED') {
                     statusBadge.textContent = "CONNECTED (ONLINE)";
@@ -125,24 +124,33 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         document.getElementById('qr-image').src = data.qrCode;
                         document.getElementById('qr-image').style.display = 'inline';
                         document.getElementById('qr-loading').style.display = 'none';
+                    } else {
+                        document.getElementById('qr-image').style.display = 'none';
+                        document.getElementById('qr-loading').style.display = 'block';
+                        document.getElementById('qr-loading').textContent = 'Waiting for bot to generate QR...';
                     }
                 }
             }
         });
 
-        // Listen for Live Messages
-        const q = query(collection(db, "messages"), orderBy("timestamp", "desc"), limit(10));
-        onSnapshot(q, (snapshot) => {
+        // Listen for Live Messages (Realtime Database version)
+        const messagesRef = ref(db, 'messages');
+        onValue(messagesRef, (snapshot) => {
             const list = document.getElementById('messages-list');
             list.innerHTML = '';
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const li = document.createElement('li');
-                if(data.isReply) li.className = "reply-msg";
-                const num = data.contact.split('@')[0];
-                li.innerHTML = `<strong>${data.isReply ? 'Aiko (Bot)' : num}</strong><br/>${data.text}`;
-                list.appendChild(li);
-            });
+            const data = snapshot.val();
+            if (data) {
+                // Realtime DB objects are unordered, so we convert to array and sort by timestamp
+                const messagesArray = Object.values(data).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                messagesArray.slice(0, 15).forEach((msg) => {
+                    const li = document.createElement('li');
+                    if(msg.isReply) li.className = "reply-msg";
+                    const num = msg.contact ? msg.contact.split('@')[0] : 'Unknown';
+                    li.innerHTML = `<strong>${msg.isReply ? 'Aiko (Bot)' : num}</strong><br/>${msg.text}`;
+                    list.appendChild(li);
+                });
+            }
             if(list.innerHTML === '') {
                 list.innerHTML = '<li style="color: #a1a1aa; border:none; text-align:center;">Waiting for new messages...</li>';
             }
