@@ -1,0 +1,21 @@
+{
+  "short_name": "Aiko",
+  "name": "Aiko - Virtual Human",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1a1b26",
+  "background_color": "#1a1b26",
+  "description": "AI-powered virtual assistant with voice control and device automation",
+  "developer": {
+    "name": "Teched Studios",
+    "url": "https://techedstudios.com"
+  }
+}

@@ -1,0 +1,32 @@
+name: Teched Studios WhatsApp Bot Runner
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    # Run every 5 hours to bypass GitHub Action's 6-hour timeout
+    # This restarts the bot, but Firebase and Baileys session handle the resume gracefully.
+    - cron: '0 */5 * * *' 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        working-directory: ./bot-engine
+        run: npm install
+
+
+      - name: Run WhatsApp Bot
+        working-directory: ./bot-engine
+        run: node index.js

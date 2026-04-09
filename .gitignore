@@ -1,0 +1,12 @@
+node_modules/
+.env
+auth_info_baileys/
+serviceAccountKey.json
+teched-wa-bot-firebase-adminsdk-fbsvc-bf6468b556.json
+.DS_Store
+*.log
+*.json
+!package.json
+!package-lock.json
+!manifest.json
+!capacitor.config.json

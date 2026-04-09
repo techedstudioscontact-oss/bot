@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#1a1b26" />
+  <title>Aiko - Virtual Human</title>
+  <link rel="manifest" href="/manifest.json" />
+  <script>
+    window.onerror = function (msg, url, line, col, error) {
+      alert("Error: " + msg + "\nURL: " + url + "\nLine: " + line);
+      return false;
+    };
+  </script>
+
+
+
+
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body class="bg-aiko-base text-white h-screen overflow-hidden">
+  <div id="root" class="h-full w-full"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

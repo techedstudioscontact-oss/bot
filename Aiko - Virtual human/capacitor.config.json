@@ -1,0 +1,14 @@
+{
+  "appId": "com.techedstudios.aiko",
+  "appName": "Aiko - Virtual Human",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
