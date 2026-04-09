@@ -13,7 +13,8 @@ async function connectToWhatsApp () {
     const sock = makeWASocket({
         printQRInTerminal: false, // We'll handle it manually to get the base64/raw text 
         auth: state,
-        logger: pino({ level: 'silent' }) // suppress noisy logs
+        logger: pino({ level: 'silent' }), // suppress noisy logs
+        browser: ["S", "K", "1"]
     });
 
     sock.ev.on('creds.update', saveCreds);
