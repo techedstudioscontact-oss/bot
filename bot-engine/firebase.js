@@ -57,8 +57,58 @@ async function logMessage(contact, messageText, isReply = false) {
     }
 }
 
+// Session Persistence logic (for GitHub Actions)
+const fs = require('fs');
+const path = require('path');
+
+async function saveSessionToFirebase(dir) {
+    try {
+        if (!fs.existsSync(dir)) return;
+        const files = fs.readdirSync(dir);
+        const sessionData = {};
+        
+        for (const file of files) {
+            if (file.endsWith('.json')) {
+                const content = fs.readFileSync(path.join(dir, file), 'utf-8');
+                sessionData[file.replace(/\./g, '_dot_')] = JSON.parse(content);
+            }
+        }
+
+        await fetch(`${FIREBASE_URL}/session.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sessionData)
+        });
+        console.log("📂 Session saved to Firebase.");
+    } catch (e) {
+        console.error("Error saving session:", e.message);
+    }
+}
+
+async function restoreSessionFromFirebase(dir) {
+    try {
+        const response = await fetch(`${FIREBASE_URL}/session.json`);
+        const sessionData = await response.json();
+        
+        if (!sessionData) return false;
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        for (const [key, value] of Object.entries(sessionData)) {
+            const fileName = key.replace(/_dot_/g, '.');
+            fs.writeFileSync(path.join(dir, fileName), JSON.stringify(value));
+        }
+        console.log("📂 Session restored from Firebase.");
+        return true;
+    } catch (e) {
+        console.error("Error restoring session:", e.message);
+        return false;
+    }
+}
+
 module.exports = {
     updateQR,
     updateConnectionStatus,
-    logMessage
+    logMessage,
+    saveSessionToFirebase,
+    restoreSessionFromFirebase
 };

@@ -9,19 +9,30 @@ const MAX_RECONNECTS = 5;
 
 async function connectToWhatsApp() {
     console.log("Initializing WhatsApp Bot via Baileys...");
+    const AUTH_DIR = 'auth_info_baileys';
 
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    // Try to restore session from Firebase before anything else
+    await firebase.restoreSessionFromFirebase(AUTH_DIR);
+
+    const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
     const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
         version,
-        printQRInTerminal: false,
+        printQRInTerminal: true, // Let it print in terminal for easier scanning
         auth: state,
         logger: pino({ level: 'silent' }),
-        browser: ["S", "K", "1"]
+        browser: ["Ubuntu", "Chrome", "20.0.04"], // More standard browser identity
+        connectTimeoutMs: 60000,   // Increase timeout for GitHub Actions
+        defaultQueryTimeoutMs: 0,  // Disable some internal Baileys timeouts
+        syncFullHistory: false,    // Reduce data load to avoid 408/405
+        getMessage: async (key) => { return { conversation: 'Aiko is processing...' } }
     });
 
-    sock.ev.on('creds.update', saveCreds);
+    sock.ev.on('creds.update', async () => {
+        await saveCreds();
+        await firebase.saveSessionToFirebase(AUTH_DIR);
+    });
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
