@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teched Studios - Modern Bot Control</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="overlay">
+        <div class="login-card glass">
+            <h2>Access Control</h2>
+            <p>Enter your studio credentials</p>
+            <input type="password" id="auth-pass" placeholder="Enter Password...">
+            <button id="login-btn">Authenticate</button>
+            <p id="login-error" class="error-text"></p>
+        </div>
+    </div>
+
+    <div class="container" id="main-content" style="display: none;">
+        <header>
+            <div class="logo">
+                <span class="gradient-text">TECHED STUDIOS</span>
+                <span class="sub-text">AI CONTROL CENTER</span>
+            </div>
+            <div class="status-indicator">
+                <span id="global-pulse" class="pulse red"></span>
+                <span id="connection-text">CONNECTING...</span>
+            </div>
+        </header>
+
+        <main class="bento-grid">
+            <!-- Bot Status Card -->
+            <div class="card glass status-card">
+                <div class="card-header">
+                    <h3>SYSTEM STATUS</h3>
+                    <div class="icon-box">⚡</div>
+                </div>
+                <div class="status-content">
+                    <div id="stat-badge" class="badge offline">OFFLINE</div>
+                    <p class="last-updated">Last Sync: <span id="sync-time">-- : --</span></p>
+                </div>
+            </div>
+
+            <!-- QR Section Card -->
+            <div class="card glass qr-card">
+                <div class="card-header">
+                    <h3>WA AUTHENTICATION</h3>
+                </div>
+                <div class="qr-payload">
+                    <div id="qr-loading" class="skeleton-ring">
+                        <span>Waiting for Bot...</span>
+                    </div>
+                    <img id="qr-display" src="" alt="WhatsApp QR" style="display: none;">
+                    
+                    <div id="link-instructions" class="instructions" style="display: none;">
+                        <p>1. Open WhatsApp on phone</p>
+                        <p>2. Go to Linked Devices</p>
+                        <p>3. Scan the code</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Operations Feed -->
+            <div class="card glass feed-card">
+                <div class="card-header">
+                    <h3>LIVE OPERATIONS</h3>
+                    <div class="live-tag">LIVE</div>
+                </div>
+                <div class="feed-container" id="ops-feed">
+                    <!-- Messages will appear here -->
+                    <div class="feed-placeholder">Waiting for network activity...</div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <button id="reset-system" class="btn-text">Reset Connection</button>
+            <div class="branding">AIKO ENGINE v2.0</div>
+        </footer>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
