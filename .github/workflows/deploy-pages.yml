@@ -30,8 +30,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # We only want to host the /admin folder
-          path: './admin'
+          # We only want to host the /dashboard folder
+          path: './dashboard'
           
       - name: Deploy to GitHub Pages
         id: deployment
