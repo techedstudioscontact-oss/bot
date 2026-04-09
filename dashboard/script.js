@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCApYzYcwrFZhyOQ0qVosgHbbU6yOvErIk",
@@ -14,22 +15,35 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 
 // Simple Auth Logic
 const loginBtn = document.getElementById('login-btn');
+const authEmail = document.getElementById('auth-email');
 const authPass = document.getElementById('auth-pass');
 const loginOverlay = document.getElementById('login-overlay');
 const mainContent = document.getElementById('main-content');
 const loginError = document.getElementById('login-error');
 
-loginBtn.addEventListener('click', () => {
-    // Matches existing PHP password for consistency
-    if (authPass.value === 'admin123') {
+// Check if already logged in securely
+onAuthStateChanged(auth, (user) => {
+    if (user) {
         loginOverlay.style.display = 'none';
         mainContent.style.display = 'block';
         initDashboard();
-    } else {
+    }
+});
+
+loginBtn.addEventListener('click', async () => {
+    const email = authEmail.value;
+    const password = authPass.value;
+    
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged will handle the UI switch
+    } catch (error) {
         loginError.textContent = 'Invalid credentials. Try again.';
+        console.error(error);
     }
 });
 
