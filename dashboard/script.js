@@ -144,3 +144,19 @@ document.getElementById('reset-system').addEventListener('click', async () => {
         alert('Reset signal sent. The bot will restart and generate a new QR code soon.');
     }
 });
+
+// Clear Logs Logic
+const clearLogsBtn = document.getElementById('clear-logs-btn');
+if (clearLogsBtn) {
+    clearLogsBtn.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to clear all message logs?')) {
+            try {
+                await set(ref(db, 'messages'), null);
+                document.getElementById('ops-feed').innerHTML = '<div class="feed-placeholder">Logs cleared. Waiting for network activity...</div>';
+            } catch (error) {
+                console.error("Failed to clear logs: ", error);
+                alert("Failed to clear logs. Check your permissions.");
+            }
+        }
+    });
+}

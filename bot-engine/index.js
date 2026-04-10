@@ -32,6 +32,18 @@ async function connectToWhatsApp() {
 
     console.log("🔗 Monitoring Admin Panel for QR Code: https://techedstudios.infinityfreeapp.com/bot/admin.php");
 
+    // Listen for reset from dashboard
+    firebase.listenForReset(async () => {
+        console.log("Cleaning up old session for reset...");
+        await firebase.updateConnectionStatus(false);
+        await firebase.clearSession();
+        const fs = require('fs');
+        if (fs.existsSync(AUTH_DIR)) {
+            fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+        }
+        process.exit(0);
+    });
+
     sock.ev.on('creds.update', async () => {
         await saveCreds();
         await firebase.saveSessionToFirebase(AUTH_DIR);
@@ -62,6 +74,11 @@ async function connectToWhatsApp() {
 
             if (isLoggedOut) {
                 console.log("Logged out. Delete auth_info_baileys and restart.");
+                const fs = require('fs');
+                if (fs.existsSync(AUTH_DIR)) {
+                    fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+                }
+                await firebase.clearSession();
                 process.exit(0);
             }
 

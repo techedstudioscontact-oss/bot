@@ -1,18 +1,23 @@
-// Firebase Realtime Database - Simple REST API (No Auth Required in Test Mode)
-// This matches the JavaGoat tutorial approach exactly
-const FIREBASE_URL = "https://teched-wa-bot-default-rtdb.asia-southeast1.firebasedatabase.app";
+const admin = require('firebase-admin');
+const fs = require('fs');
+const path = require('path');
 
-// Function to store the generated QR code so the PHP admin panel can read it
+// Use the service account key from the root directory
+const serviceAccount = require('../teched-wa-bot-firebase-adminsdk-fbsvc-bf6468b556.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://teched-wa-bot-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+
+const db = admin.database();
+
 async function updateQR(qrCodeBase64) {
     try {
-        await fetch(`${FIREBASE_URL}/status.json`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                qrCode: qrCodeBase64,
-                status: 'WAITING_FOR_SCAN',
-                updatedAt: new Date().toISOString()
-            })
+        await db.ref('status').update({
+            qrCode: qrCodeBase64,
+            status: 'WAITING_FOR_SCAN',
+            updatedAt: new Date().toISOString()
         });
         console.log("✅ QR Code updated on Firebase for Admin Panel.");
     } catch (e) {
@@ -20,7 +25,6 @@ async function updateQR(qrCodeBase64) {
     }
 }
 
-// Function to update connection status
 async function updateConnectionStatus(isConnected) {
     try {
         const body = {
@@ -29,37 +33,24 @@ async function updateConnectionStatus(isConnected) {
         };
         if (isConnected) body.qrCode = null;
 
-        await fetch(`${FIREBASE_URL}/status.json`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
+        await db.ref('status').update(body);
     } catch (e) {
         console.error("Error updating status:", e.message);
     }
 }
 
-// Function to log received messages to Firebase
 async function logMessage(contact, messageText, isReply = false) {
     try {
-        await fetch(`${FIREBASE_URL}/messages.json`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contact: contact,
-                text: messageText,
-                isReply: isReply,
-                timestamp: new Date().toISOString()
-            })
+        await db.ref('messages').push({
+            contact: contact,
+            text: messageText,
+            isReply: isReply,
+            timestamp: new Date().toISOString()
         });
     } catch (e) {
         console.error("Error logging message:", e.message);
     }
 }
-
-// Session Persistence logic (for GitHub Actions)
-const fs = require('fs');
-const path = require('path');
 
 async function saveSessionToFirebase(dir) {
     try {
@@ -74,11 +65,7 @@ async function saveSessionToFirebase(dir) {
             }
         }
 
-        await fetch(`${FIREBASE_URL}/session.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(sessionData)
-        });
+        await db.ref('session').set(sessionData);
         console.log("📂 Session saved to Firebase.");
     } catch (e) {
         console.error("Error saving session:", e.message);
@@ -87,8 +74,8 @@ async function saveSessionToFirebase(dir) {
 
 async function restoreSessionFromFirebase(dir) {
     try {
-        const response = await fetch(`${FIREBASE_URL}/session.json`);
-        const sessionData = await response.json();
+        const snapshot = await db.ref('session').once('value');
+        const sessionData = snapshot.val();
         
         if (!sessionData) return false;
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -105,10 +92,30 @@ async function restoreSessionFromFirebase(dir) {
     }
 }
 
+function listenForReset(callback) {
+    db.ref('status/status').on('value', (snapshot) => {
+        if (snapshot.val() === 'RESET_REQUESTED') {
+            console.log("🔄 Reset requested from Dashboard!");
+            callback();
+        }
+    });
+}
+
+async function clearSession() {
+    try {
+        await db.ref('session').remove();
+        console.log("📂 Firebase session cleared.");
+    } catch (e) {
+        console.error("Error clearing session from Firebase:", e.message);
+    }
+}
+
 module.exports = {
     updateQR,
     updateConnectionStatus,
     logMessage,
     saveSessionToFirebase,
-    restoreSessionFromFirebase
+    restoreSessionFromFirebase,
+    listenForReset,
+    clearSession
 };

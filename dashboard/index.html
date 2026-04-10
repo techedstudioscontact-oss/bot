@@ -68,9 +68,12 @@
 
             <!-- Live Operations Feed -->
             <div class="card glass feed-card">
-                <div class="card-header">
+                <div class="card-header" style="align-items: center;">
                     <h3>LIVE OPERATIONS</h3>
-                    <div class="live-tag">LIVE</div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button id="clear-logs-btn" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; width: auto;">CLEAR LOGS</button>
+                        <div class="live-tag" style="background: var(--success); padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: #fff;">LIVE</div>
+                    </div>
                 </div>
                 <div class="feed-container" id="ops-feed">
                     <!-- Messages will appear here -->
