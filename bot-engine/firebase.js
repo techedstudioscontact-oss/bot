@@ -2,8 +2,17 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
 
-// Use the service account key from the root directory
-const serviceAccount = require('../teched-wa-bot-firebase-adminsdk-fbsvc-bf6468b556.json');
+// Load the service account key locally or from GitHub Secrets
+let serviceAccount;
+try {
+    serviceAccount = require('../teched-wa-bot-firebase-adminsdk-fbsvc-bf6468b556.json');
+} catch (e) {
+    if (process.env.FIREBASE_KEY) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
+    } else {
+        throw new Error("CRITICAL ERROR: Missing Firebase Service Account! Ensure the file exists locally or FIREBASE_KEY is set in GitHub Secrets.");
+    }
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

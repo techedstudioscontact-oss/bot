@@ -32,4 +32,6 @@ jobs:
 
       - name: Run WhatsApp Bot
         working-directory: ./bot-engine
+        env:
+          FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
         run: node index.js
