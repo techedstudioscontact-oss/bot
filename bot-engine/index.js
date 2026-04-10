@@ -4,6 +4,14 @@ const qrcode = require('qrcode-terminal');
 const { getAikoResponse } = require('./brain');
 const firebase = require('./firebase');
 
+// Prevent unexpected crashes from returning exit code 1
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err.message);
+});
+
 let reconnectAttempts = 0;
 const MAX_RECONNECTS = 5;
 
@@ -40,17 +48,24 @@ async function connectToWhatsApp() {
 
     console.log("🔗 Monitoring Admin Panel for QR Code: https://techedstudios.infinityfreeapp.com/bot/admin.php");
 
-    // Listen for reset from dashboard
-    firebase.listenForReset(async () => {
+    const performCleanupAndExit = async () => {
         console.log("Cleaning up old session for reset...");
-        await firebase.updateConnectionStatus(false);
-        await firebase.clearSession();
-        const fs = require('fs');
-        if (fs.existsSync(AUTH_DIR)) {
-            fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+        try { sock.end(undefined); } catch (e) {} // Stop baileys cleanly
+        try {
+            await firebase.updateConnectionStatus(false);
+            await firebase.clearSession();
+            const fs = require('fs');
+            if (fs.existsSync(AUTH_DIR)) {
+                fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+            }
+        } catch (e) {
+            console.error("Cleanup Error:", e.message);
         }
         process.exit(0);
-    });
+    };
+
+    // Listen for reset from dashboard
+    firebase.listenForReset(performCleanupAndExit);
 
     sock.ev.on('creds.update', async () => {
         await saveCreds();
@@ -82,11 +97,16 @@ async function connectToWhatsApp() {
 
             if (isLoggedOut) {
                 console.log("Logged out. Delete auth_info_baileys and restart.");
-                const fs = require('fs');
-                if (fs.existsSync(AUTH_DIR)) {
-                    fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+                try { sock.end(undefined); } catch (e) {} // Stop baileys cleanly
+                try {
+                    await firebase.clearSession();
+                    const fs = require('fs');
+                    if (fs.existsSync(AUTH_DIR)) {
+                        fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+                    }
+                } catch (e) {
+                    console.error("Logout Cleanup Error:", e.message);
                 }
-                await firebase.clearSession();
                 process.exit(0);
             }
 
