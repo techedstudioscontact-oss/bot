@@ -29,9 +29,12 @@ jobs:
         working-directory: ./bot-engine
         run: npm install
 
+      - name: Create Firebase Key File
+        run: |
+          cat << 'EOF' > teched-wa-bot-firebase-adminsdk-fbsvc-bf6468b556.json
+          ${{ secrets.FIREBASE_SERVICE_ACCOUNT || secrets.FIREBASE_KEY }}
+          EOF
 
       - name: Run WhatsApp Bot
         working-directory: ./bot-engine
-        env:
-          FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
         run: node index.js
