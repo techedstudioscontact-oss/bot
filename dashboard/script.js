@@ -215,16 +215,22 @@ async function triggerGitHubAction(secrets) {
     const { github_token, owner, repo, workflow_id } = secrets;
     const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow_id}/dispatches`;
     
-    await fetch(url, {
+    const res = await fetch(url, {
         method: 'POST',
         headers: {
             'Accept': 'application/vnd.github.v3+json',
-            'Authorization': `token ${github_token}`,
+            'Authorization': `Bearer ${github_token}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ ref: 'main' })
     });
+    
+    if (!res.ok) {
+        throw new Error(`GitHub API Error: ${res.status}`);
+    }
+    
     console.log("🚀 GitHub Action dispatched (Engine Started)!");
+    alert("Engine Started! The GitHub Action is booting up the bot.");
 }
 
 async function cancelGitHubAction(secrets) {
@@ -234,7 +240,7 @@ async function cancelGitHubAction(secrets) {
     const res = await fetch(runsUrl, {
         headers: {
             'Accept': 'application/vnd.github.v3+json',
-            'Authorization': `token ${github_token}`
+            'Authorization': `Bearer ${github_token}`
         }
     });
     
@@ -246,12 +252,14 @@ async function cancelGitHubAction(secrets) {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `token ${github_token}`
+                    'Authorization': `Bearer ${github_token}`
                 }
             });
             console.log(`🛑 Cancelled Run ID: ${run.id} (Engine Stopped)`);
         }
+        alert("Engine Stopped! All active background bots have been killed.");
     } else {
+        alert("Engine was already stopped (No active runs found).");
         console.log("No active runs to cancel.");
     }
 }
