@@ -110,6 +110,16 @@ async function clearSession() {
     }
 }
 
+async function getBotState() {
+    try {
+        const snapshot = await db.ref('control/botState').once('value');
+        return snapshot.val() || 'ACTIVE';
+    } catch (e) {
+        console.error("Error reading botState:", e.message);
+        return 'ACTIVE';
+    }
+}
+
 module.exports = {
     updateQR,
     updateConnectionStatus,
@@ -117,5 +127,6 @@ module.exports = {
     saveSessionToFirebase,
     restoreSessionFromFirebase,
     listenForReset,
-    clearSession
+    clearSession,
+    getBotState
 };

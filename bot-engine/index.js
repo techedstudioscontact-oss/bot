@@ -14,6 +14,14 @@ async function connectToWhatsApp() {
     // Try to restore session from Firebase before anything else
     await firebase.restoreSessionFromFirebase(AUTH_DIR);
 
+    // Check remote power state
+    const botState = await firebase.getBotState();
+    if (botState === 'STOPPED') {
+        console.log("🛑 Dashboard says STOPPED. Exiting bot immediately to save resources.");
+        await firebase.updateConnectionStatus(false);
+        process.exit(0);
+    }
+
     const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
     const { version } = await fetchLatestBaileysVersion();
 

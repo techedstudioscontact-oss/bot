@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCApYzYcwrFZhyOQ0qVosgHbbU6yOvErIk",
@@ -31,6 +31,7 @@ onAuthStateChanged(auth, (user) => {
         loginOverlay.style.display = 'none';
         mainContent.style.display = 'block';
         initDashboard();
+        initPowerToggle();
     }
 });
 
@@ -159,4 +160,98 @@ if (clearLogsBtn) {
             }
         }
     });
+}
+
+// Firebase Lockbox & GitHub API Power Switch
+async function initPowerToggle() {
+    const powerToggleContainer = document.getElementById('power-toggle-container');
+    const powerSwitch = document.getElementById('power-switch');
+    powerToggleContainer.style.display = 'flex';
+
+    // Get current state
+    const botStateSnap = await get(ref(db, 'control/botState'));
+    let currentState = botStateSnap.val() || 'ACTIVE';
+    powerSwitch.checked = (currentState === 'ACTIVE');
+
+    powerSwitch.addEventListener('change', async (e) => {
+        const isTurningOn = e.target.checked;
+        const newState = isTurningOn ? 'ACTIVE' : 'STOPPED';
+        powerSwitch.disabled = true; // prevent spam
+        
+        try {
+            await set(ref(db, 'control/botState'), newState);
+            
+            // Get GH Token from Firebase Vault
+            const secretSnap = await get(ref(db, 'secrets'));
+            const secrets = secretSnap.val();
+            
+            if (secrets && secrets.github_token) {
+                if (isTurningOn) {
+                    await triggerGitHubAction(secrets);
+                } else {
+                    await cancelGitHubAction(secrets);
+                }
+            } else {
+                console.warn("No GitHub secrets found in Firebase. Engine power state updated locally only.");
+            }
+        } catch (err) {
+            console.error("Failed to toggle power:", err);
+            powerSwitch.checked = !isTurningOn; // revert UI
+        } finally {
+            powerSwitch.disabled = false;
+        }
+    });
+
+    // Keep switch in sync across browser tabs
+    onValue(ref(db, 'control/botState'), (snap) => {
+        const val = snap.val();
+        if (val) {
+            powerSwitch.checked = (val === 'ACTIVE');
+        }
+    });
+}
+
+async function triggerGitHubAction(secrets) {
+    const { github_token, owner, repo, workflow_id } = secrets;
+    const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow_id}/dispatches`;
+    
+    await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'Authorization': `token ${github_token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ref: 'main' })
+    });
+    console.log("🚀 GitHub Action dispatched (Engine Started)!");
+}
+
+async function cancelGitHubAction(secrets) {
+    const { github_token, owner, repo, workflow_id } = secrets;
+    const runsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow_id}/runs?status=in_progress`;
+    
+    const res = await fetch(runsUrl, {
+        headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'Authorization': `token ${github_token}`
+        }
+    });
+    
+    const data = await res.json();
+    if (data.workflow_runs && data.workflow_runs.length > 0) {
+        for (const run of data.workflow_runs) {
+            const cancelUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${run.id}/cancel`;
+            await fetch(cancelUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `token ${github_token}`
+                }
+            });
+            console.log(`🛑 Cancelled Run ID: ${run.id} (Engine Stopped)`);
+        }
+    } else {
+        console.log("No active runs to cancel.");
+    }
 }
